@@ -22,5 +22,8 @@ router.put('/:id/update', user_controller.user_update)
 // Delete user
 router.delete('/:id/delete', user_controller.user_delete)
 
+//User login
+router.post('/login', user_controller.user_login)
+
 
 module.exports = router

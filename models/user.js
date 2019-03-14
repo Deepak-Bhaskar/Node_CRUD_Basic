@@ -6,7 +6,7 @@ let UserSchema = new Schema({
   age: { type: Number },
   mobile: { type: Number, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: true, select: false },
 })
 
 // Export the model

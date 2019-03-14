@@ -8,8 +8,10 @@ const user = require('./routes/user')
 // initialize our express app
 const app = express()
 
+// Initialize the port
 let port = 3001
 
+// Listen port 
 app.listen(port, () => {
   console.log(`This app is running on port: ${port}`);
 })
@@ -17,6 +19,7 @@ app.listen(port, () => {
 // set up mongoose collection
 let db_url = 'mongodb://localhost:27017/node_crud';
 
+// Connect mongoose to database
 mongoose.connect(db_url)
   .then(() => {
     console.log('Db connected')

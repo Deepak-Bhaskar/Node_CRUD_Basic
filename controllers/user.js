@@ -1,4 +1,6 @@
 const User = require('../models/user')
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 // Simple version without validation pr sanitation
 const test = (req, res) => {
@@ -7,26 +9,32 @@ const test = (req, res) => {
 
 // Create user
 const user_create = (req, res, next) => {
-  console.log('====  create controller ====', req.body)
-  let user = new User({
-    name: req.body.name,
-    email: req.body.email,
-    age: req.body.age,
-    mobile: req.body.mobile,
-    password: req.body.password,
-  })
-
-  user.save((err) => {
+  let user = ''
+  bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
     if (err) {
       return next(err)
     }
-    res.send('User successfully created.')
+    user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      age: req.body.age,
+      mobile: req.body.mobile,
+      password: hash,
+    })
+
+    // Store hash in your password DB.
+    user.save((err) => {
+      if (err) {
+        return next(err)
+      }
+      res.send('User successfully created.')
+    })
   })
 }
 
 // Read user by Id
-const user_detail_Id = (req, res) => {
-  User.findById(req.params.id, (err, user) => {
+const user_detail_Id = (req, res, next) => {
+  User.findOne({ _id: req.params.id }, (err, user) => {
     if (err) {
       return next(err)
     }
@@ -55,7 +63,6 @@ const user_update = (req, res) => {
 }
 
 // Delete user
-
 const user_delete = (req, res) => {
   User.findByIdAndDelete(req.params.id, (err) => {
     if (err) {
@@ -65,11 +72,33 @@ const user_delete = (req, res) => {
   })
 }
 
+const user_login = async (req, res) => {
+  let exist = await User.findOne({ email: req.body.username }).select('+password').lean()
+
+  //Check user exist
+  if (exist) {
+
+    // Compare password entered from stored hash password.
+    const match = await bcrypt.compare(req.body.password, exist.password)
+    delete exist.password
+    if (match) {
+      res.send(exist)
+    } else {
+      res.status(400)
+      res.json({ message: 'Password is invalid' })
+    }
+  } else {
+    res.status(400)
+    res.json({ message: 'User not found' })
+  }
+}
+
 module.exports = {
   test,
   user_create,
   user_detail_Id,
   user_list,
   user_update,
-  user_delete
+  user_delete,
+  user_login
 }
