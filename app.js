@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
+const fileUpload = require('express-fileupload');
 
 // Import all routes
 const user = require('./routes/user')
@@ -10,6 +11,9 @@ const app = express()
 
 // Initialize the port
 let port = 3001
+
+// Set static file 
+app.use(express.static('public'))
 
 // Listen port 
 app.listen(port, () => {
@@ -31,4 +35,8 @@ mongoose.connect(db_url)
 // Use body parser for body
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }));
+
+// Upload file
+app.use(fileUpload())
+
 app.use('/users', user)
