@@ -1,7 +1,8 @@
 const User = require('../models/user')
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-const upload = require('../util/common-helper');
+// const upload = require('../util/common-helper');
+const upload = require('../services/upload')
 
 // Simple version without validation pr sanitation
 const test = (req, res) => {
@@ -10,35 +11,40 @@ const test = (req, res) => {
 
 // Create user
 const user_create = (req, res, next) => {
-  console.log('ssssssssssssssssssss', req)
-  upload._fileUploder(req.files)
-    .then((response) => {
-      let user = ''
-      bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
-        if (err) {
-          return next(err)
-        }
-        user = new User({
-          name: req.body.name,
-          email: req.body.email,
-          age: req.body.age,
-          mobile: req.body.mobile,
-          password: hash,
-          profile: response
-        })
-
-        // Store hash in your password DB.
-        user.save((err) => {
+  if (req.files.profile) {
+    // console.log(req.files.profile)
+    upload._uploadImage(req.files.profile)
+      .then((response) => {
+        let user = ''
+        bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
           if (err) {
             return next(err)
           }
-          res.send('User successfully created.')
+          user = new User({
+            name: req.body.name,
+            email: req.body.email,
+            age: req.body.age,
+            mobile: req.body.mobile,
+            password: hash,
+            profile: response
+          })
+
+          // Store hash in your password DB.
+          user.save((err) => {
+            if (err) {
+              return next(err)
+            }
+            res.send('User successfully created.')
+          })
         })
       })
-    })
-    .catch((err) => {
-      console.log(err)
-    })
+      .catch((err) => {
+        console.log(err)
+      })
+  } else {
+    res.status(400)
+    res.send('Profile image is not uploaded.')
+  }
 }
 
 // Read user by Id
