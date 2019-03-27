@@ -1,7 +1,8 @@
 const User = require('../models/user')
 const bcrypt = require('bcrypt');
+const boom = require('boom');
 const saltRounds = 10;
-// const upload = require('../util/common-helper');
+const sendResponse = require('../util/apiHandler');
 const upload = require('../services/upload')
 
 // Simple version without validation pr sanitation
@@ -15,10 +16,14 @@ const user_create = (req, res, next) => {
     // console.log(req.files.profile)
     upload._uploadImage(req.files.profile)
       .then((response) => {
+        console.log('aaaaaaaaaaaaaaaaaaaaaaa', response);
+
         let user = ''
         bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
           if (err) {
-            return next(err)
+            // return next(err)
+            console.log('ssssssssss', err)
+            sendResponse._apiHandler(res, boom.badRequest())
           }
           user = new User({
             name: req.body.name,
@@ -32,18 +37,20 @@ const user_create = (req, res, next) => {
           // Store hash in your password DB.
           user.save((err) => {
             if (err) {
-              return next(err)
+              console.log('ssssssssss', err)
+              sendResponse._apiHandler(res, boom.badRequest(err.errmsg))
             }
-            res.send('User successfully created.')
+            res.send()
+            sendResponse._apiHandler(res, user, 'User successfully created.')
           })
         })
       })
       .catch((err) => {
         console.log(err)
+        sendResponse._apiHandler(res, boom.badImplementation())
       })
   } else {
-    res.status(400)
-    res.send('Profile image is not uploaded.')
+    sendResponse._apiHandler(res, boom.badRequest('Profile image is not uploaded.'))
   }
 }
 

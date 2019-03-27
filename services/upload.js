@@ -1,39 +1,45 @@
-const aws = require('aws-sdk')
+const AWS = require('aws-sdk')
 const path = require('path')
 
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY,
+  region: process.env.AWS_BUCKET_REGION
+});
+
+const s3 = new AWS.S3();
 
 const _uploadImage = async (file) => {
   try {
-    console.log('process.env.accessKey', process.env.accessKey)
-    console.log('process.env.secretKeyy', process.env.secretKey)
-    console.log('process.env.AWS_BUCKET_NAME', process.env.AWS_BUCKET_NAME)
-    let name = file.name
-    let ext = path.extname(name)
-    let filePath = `${name}`
-    aws.config.setPromisesDependency()
-    aws.config.update({
-      accessKeyId: process.env.accessKey,
-      secretAccessKey: process.env.secretKey,
-      region: 'ap-south-1'
-    })
+    let name = file.name;
+    let ext = path.extname(name);
+    let pathFile = `${name}`
 
-    const s3 = new aws.S3()
     let params = {
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: filePath,
+      Key: pathFile,
       Body: file.data,
+      ACL: 'public-read',
     }
-
-    s3.putObject(params, async (err, data) => {
-      if (err) {
-        return err;
-      }
-      else {
-        return data;
-      }
+    return new Promise((resolve, reject) => {
+      s3.putObject(params, async function (err, data) {
+        if (err) {
+          return reject({
+            status: false,
+            message: err.message.toString()
+          });
+        } else {
+          return resolve();
+        }
+      });
+    }).then(async () => {
+      let link = `https://s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${process.env.AWS_BUCKET_NAME}/${pathFile}`;
+      return link;
+    }).catch((err) => {
+      return Promise.reject(err);
     });
-  } catch (error) {
-    console.log(error)
+  } catch (err) {
+    return Promise.reject(err);
   }
 }
 
